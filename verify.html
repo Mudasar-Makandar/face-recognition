@@ -11,8 +11,19 @@
             left: 0;
             }
         </style>
+        <script>
+             
+        async function load_models() {
+            const MODEL_URL = '/face-recognition/models'
+
+            await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
+            await faceapi.loadFaceLandmarkModel(MODEL_URL)
+            await faceapi.loadFaceRecognitionModel(MODEL_URL)
+
+        }
+        </script>
     </head>
-    <body>
+    <body onload="load_models()">
         
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -84,17 +95,8 @@
              '<img id="my_image" src="'+data_uri+'"/><canvas id="reflay" class="overlay"></canvas>';
              
              async function face_verify(){
-                    
-                    const MODEL_URL = '/face-recognition/models'
-
-                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
-                    await faceapi.loadFaceLandmarkModel(MODEL_URL)
-                    await faceapi.loadFaceRecognitionModel(MODEL_URL)
-
                     var user_name = sessionStorage.getItem("user_name");
                     
-                    //data = {}
-                    //data["name"] = user_name
                 try{
                     const response = await fetch('https://dpuetqe6fj.execute-api.ap-southeast-1.amazonaws.com/Alpha/trained/list?userId='+user_name.toString(), {
                         method: 'GET',
