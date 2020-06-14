@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Face App</title>
+        <style>
+        #overlay, .overlay {
+            position: absolute;
+             margin-left: 30%;
+            top: 0;
+            left: 0;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script type="text/javascript" src="webcam.min.js"></script>
+        <script defer src="face-api.min.js" ></script>
+        <script>
+            function goBack() {
+              window.history.back();
+            }
+            </script>
+        <style>
+            #my_camera{
+             position: center;
+             margin-left: 30%;
+             width: 320px;
+             height: 240px;
+             border: 1px solid black;
+            }
+            #button, #confirmation{
+             
+             margin-left: 30%;
+        
+            }
+            </style>
+            
+            <div id="my_camera"> </div>
+            <div id="confirmation">
+
+            </div>
+            <div id="button">
+            <input  type=button value="Take Snapshot" onClick="take_snapshot()">
+            <button onclick="goBack()">Go BAck</button>
+        </div>
+            
+             
+       
+        
+           
+            
+        <script language="JavaScript">
+            Webcam.set({
+             width: 320,
+             height: 240,
+             image_format: 'jpeg',
+             jpeg_quality: 200
+            });
+            Webcam.attach( '#my_camera' );
+
+            function reload() {
+                location.reload()
+                
+            }
+           
+           function take_snapshot() {
+            document.getElementById('button').innerHTML = 
+            '<div class="spinner-border text-primary"></div> Detecting Face...'
+        try {
+            // take snapshot and get image data
+            Webcam.snap( function(data_uri) {
+             // display results in page
+             document.getElementById('my_camera').innerHTML = 
+             '<img id="my_image" src="'+data_uri+'"/><canvas id="reflay" class="overlay"></canvas>';
+             
+             async function face_verify(){
+                    
+                    const MODEL_URL = '/face-recognition/models'
+
+                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
+                    await faceapi.loadFaceLandmarkModel(MODEL_URL)
+                    await faceapi.loadFaceRecognitionModel(MODEL_URL)
+
+                    var user_name = sessionStorage.getItem("user_name");
+                    
+                    //data = {}
+                    //data["name"] = user_name
+                try{
+                    const response = await fetch('https://dpuetqe6fj.execute-api.ap-southeast-1.amazonaws.com/Alpha/trained/list?userId='+user_name.toString(), {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        //body: JSON.stringify(data)
+                    });
+
+                    const response_data = await response.json();
+                    if (response_data.status != "Success") {
+                            alert("No record found for this username");
+                            location.reload();
+                            }
+                
+                
+                    var labeledFaceDescriptions = []
+                    //var image_base64 = sessionStorage.getItem("img_base64");
+                    const API_img = await faceapi.fetchImage(response_data['data']['trained_data'])
+                    const detections = await faceapi.detectSingleFace(API_img).withFaceLandmarks().withFaceDescriptor()
+                    labeledFaceDescriptions.push(detections.descriptor)
+                    labeledFaceDescriptions = new faceapi.LabeledFaceDescriptors(user_name.toString(), labeledFaceDescriptions)
+                    
+                    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptions, 0.3)
+                }
+                catch(err) {
+                    alert("No record found for this username");
+                    window.history.back();
+                }
+                    //const labeledFaceDescriptors = await loadLabeledImages()
+                    const verify_img= document.getElementById('my_image')
+                    let fullFaceDescriptions = await faceapi.detectAllFaces(verify_img).withFaceLandmarks().withFaceDescriptors()
+                    const canvas = $('#reflay').get(0)
+                    faceapi.matchDimensions(canvas, verify_img)
+                
+                    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, verify_img)
+                    const result = fullFaceDescriptions.map(d => faceMatcher.findBestMatch(d.descriptor))
+                    console.log(result)
+        
+                    const box = fullFaceDescriptions[0].detection.box
+                    const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
+                    drawBox.draw(canvas)
+                    //faceapi.draw.drawDetections(canvas, fullFaceDescriptions)
+                    //faceapi.draw.drawFaceLandmarks(canvas, fullFaceDescriptions)
+                    
+                    
+
+                    //document.getElementById('confirmation').innerHTML = 'Accuracy more than 0.85 lead to good results, If it is less than 0.85 please re-take'
+                    document.getElementById('button').innerHTML = 
+                    '<input  type=button value="Try Another" onClick="reload()"><button onclick="goBack()">Go BAck</button>'
+               
+                    console.log(typeof(user_name.toString()))
+                    console.log(typeof(user_name))
+                    console.log(result)
+                    console.log(typeof(result))
+                    if (result[0]['_label'] != user_name.toString()) {
+                        alert("No Match Found, Please Try again!");
+                        location.reload();
+                    }
+
+                    if (result[0]['_label'] == user_name.toString()) {
+                    alert("Verified Successfully!");
+                    var user_name = "";
+                    sessionStorage.setItem("user_name", user_name);
+                    }
+                    
+                
+                
+            }
+            face_verify();
+             } );
+             
+       
+           }
+           catch(err) {
+            alert("Something went wrong!");
+            location.reload();
+           }
+           }
+           </script>
+    </body>
+</html>

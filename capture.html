@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Face App</title>
+        <style>
+        #overlay, .overlay {
+            position: absolute;
+             margin-left: 30%;
+            top: 0;
+            left: 0;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script type="text/javascript" src="webcam.min.js"></script>
+        <script defer src="face-api.min.js" ></script>
+        <script>
+            function goBack() {
+              window.history.back();
+            }
+            </script>
+        <style>
+            #my_camera{
+             position: center;
+             margin-left: 30%;
+             width: 320px;
+             height: 240px;
+             border: 1px solid black;
+            }
+            #button, #confirmation{
+             
+             margin-left: 30%;
+        
+            }
+            </style>
+            
+            <div id="my_camera"> </div>
+            <div id="confirmation">
+
+            </div>
+            <div id="button">
+            <input  type=button value="Take Snapshot" onClick="take_snapshot()">
+            <button onclick="goBack()">Go BAck</button>
+        </div>
+            <div id="results" ></div>
+             
+       
+        
+           
+            
+        <script language="JavaScript">
+            Webcam.set({
+             width: 320,
+             height: 240,
+             image_format: 'jpeg',
+             jpeg_quality: 200
+            });
+            Webcam.attach( '#my_camera' );
+
+            function reload() {
+                location.reload()
+                
+            }
+           
+           function take_snapshot() {
+            document.getElementById('button').innerHTML = 
+            '<div class="spinner-border text-primary"></div> Detecting Face...'
+        try {
+            // take snapshot and get image data
+            Webcam.snap( function(data_uri) {
+             // display results in page
+             document.getElementById('my_camera').innerHTML = 
+             '<img id="my_image" src="'+data_uri+'"/><canvas id="reflay" class="overlay"></canvas>';
+             
+             async function face(){
+                    
+                    const MODEL_URL = '/face-recognition/models'
+
+                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
+                    await faceapi.loadFaceLandmarkModel(MODEL_URL)
+                    await faceapi.loadFaceRecognitionModel(MODEL_URL)
+
+                    const img= document.getElementById('my_image')
+                    let fullFaceDescriptions = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
+                    const canvas = $('#reflay').get(0)
+                    faceapi.matchDimensions(canvas, img)
+
+                    fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, img)
+                    faceapi.draw.drawDetections(canvas, fullFaceDescriptions)
+                    faceapi.draw.drawFaceLandmarks(canvas, fullFaceDescriptions)
+                    
+                    
+
+                    //document.getElementById('confirmation').innerHTML = 'Accuracy more than 0.85 lead to good results, If it is less than 0.85 please re-take'
+                    document.getElementById('button').innerHTML = 
+                    '<input  type=button value="Try Another" onClick="reload()"><button onclick="goBack()">Confirm</button>'
+                    
+                    
+                    if ( fullFaceDescriptions.length == 0) {
+                        alert("No face detected, Try again!");
+                        var image_base64 = "";
+                        sessionStorage.setItem("img_base64", image_base64);
+                        location.reload(); 
+                    }
+
+                    if ( fullFaceDescriptions[0]['detection']['_score'] < 0.90) {
+                        alert("Face is detected with accuracy of "+Math.round(fullFaceDescriptions[0]['detection']['_score']*100)+"%. Please try again to get more than 90% accuracy!");
+                        var image_base64 = "";
+                        sessionStorage.setItem("img_base64", image_base64);
+                        location.reload(); 
+                    }
+
+                    var image_base64 = data_uri;
+                    sessionStorage.setItem("img_base64", image_base64);
+                
+                
+            }
+            face();
+             } );
+             
+       
+           }
+           catch(err) {
+            alert("Something went wrong!");
+            location.reload();
+           }
+           }
+           </script>
+    </body>
+</html>
