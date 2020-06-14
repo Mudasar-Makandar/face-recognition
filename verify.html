@@ -112,17 +112,18 @@
                     var labeledFaceDescriptions = []
                     //var image_base64 = sessionStorage.getItem("img_base64");
                     const API_img = await faceapi.fetchImage(response_data['data']['trained_data'])
-                    const detections = await faceapi.detectSingleFace(API_img).withFaceLandmarks().withFaceDescriptor()
-                    labeledFaceDescriptions.push(detections.descriptor)
-                    labeledFaceDescriptions = new faceapi.LabeledFaceDescriptors(user_name.toString(), labeledFaceDescriptions)
                     
-                    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptions, 0.3)
                 }
                 catch(err) {
                     alert("No record found for this username");
                     window.history.back();
                 }
                     //const labeledFaceDescriptors = await loadLabeledImages()
+                    const detections = await faceapi.detectSingleFace(API_img).withFaceLandmarks().withFaceDescriptor()
+                    labeledFaceDescriptions.push(detections.descriptor)
+                    labeledFaceDescriptions = new faceapi.LabeledFaceDescriptors(user_name.toString(), labeledFaceDescriptions)
+                    
+                    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptions, 0.3)
                     const verify_img= document.getElementById('my_image')
                     let fullFaceDescriptions = await faceapi.detectAllFaces(verify_img).withFaceLandmarks().withFaceDescriptors()
                     const canvas = $('#reflay').get(0)
