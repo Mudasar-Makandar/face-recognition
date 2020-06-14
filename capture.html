@@ -11,8 +11,18 @@
             left: 0;
             }
         </style>
+        <script>
+            
+        async function load_model() {
+            const MODEL_URL = '/models'
+
+            await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
+            await faceapi.loadFaceLandmarkModel(MODEL_URL)
+            await faceapi.loadFaceRecognitionModel(MODEL_URL)
+        }
+        </script>
     </head>
-    <body>
+    <body onload="load_model()">
         
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -84,13 +94,6 @@
              '<img id="my_image" src="'+data_uri+'"/><canvas id="reflay" class="overlay"></canvas>';
              
              async function face(){
-                    
-                    const MODEL_URL = '/face-recognition/models'
-
-                    await faceapi.loadSsdMobilenetv1Model(MODEL_URL)
-                    await faceapi.loadFaceLandmarkModel(MODEL_URL)
-                    await faceapi.loadFaceRecognitionModel(MODEL_URL)
-
                     const img= document.getElementById('my_image')
                     let fullFaceDescriptions = await faceapi.detectAllFaces(img).withFaceLandmarks().withFaceDescriptors()
                     const canvas = $('#reflay').get(0)
@@ -100,9 +103,6 @@
                     faceapi.draw.drawDetections(canvas, fullFaceDescriptions)
                     faceapi.draw.drawFaceLandmarks(canvas, fullFaceDescriptions)
                     
-                    
-
-                    //document.getElementById('confirmation').innerHTML = 'Accuracy more than 0.85 lead to good results, If it is less than 0.85 please re-take'
                     document.getElementById('button').innerHTML = 
                     '<input  type=button value="Try Another" onClick="reload()"><button onclick="goBack()">Confirm</button>'
                     
