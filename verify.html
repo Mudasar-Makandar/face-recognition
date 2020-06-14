@@ -113,11 +113,7 @@
                     //var image_base64 = sessionStorage.getItem("img_base64");
                     const API_img = await faceapi.fetchImage(response_data['data']['trained_data'])
                     
-                }
-                catch(err) {
-                    alert("No record found for this username");
-                    window.history.back();
-                }
+               
                     //const labeledFaceDescriptors = await loadLabeledImages()
                     const detections = await faceapi.detectSingleFace(API_img).withFaceLandmarks().withFaceDescriptor()
                     labeledFaceDescriptions.push(detections.descriptor)
@@ -145,10 +141,7 @@
                     document.getElementById('button').innerHTML = 
                     '<input  type=button value="Try Another" onClick="reload()"><button onclick="goBack()">Go BAck</button>'
                
-                    console.log(typeof(user_name.toString()))
-                    console.log(typeof(user_name))
-                    console.log(result)
-                    console.log(typeof(result))
+                    
                     if (result[0]['_label'] != user_name.toString()) {
                         alert("No Match Found, Please Try again!");
                         location.reload();
@@ -160,7 +153,11 @@
                     sessionStorage.setItem("user_name", user_name);
                     }
                     
-                
+                 }
+                catch(err) {
+                    alert("No record found for this username");
+                    window.history.back();
+                }
                 
             }
             face_verify();
